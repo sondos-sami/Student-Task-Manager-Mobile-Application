@@ -1,4 +1,4 @@
-# student_task_manager
+# student_app
 
 A new Flutter project.
 
