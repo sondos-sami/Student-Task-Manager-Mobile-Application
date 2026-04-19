@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../database/database_helper.dart';
-import '../models/task_model.dart';
+import '../../models/task_model.dart';
+import '../../services/task_service.dart';
 import 'add_task_screen.dart';
 import 'edit_task_screen.dart';
 
-// Scaffold
 class TaskListScreen extends StatefulWidget {
   final int userId;
 
@@ -16,8 +15,11 @@ class TaskListScreen extends StatefulWidget {
 
 class _TaskListScreenState extends State<TaskListScreen> {
   List<Task> tasks = [];
+
   String filter = "All";
   String priorityFilter = "All";
+
+  final TaskService taskService = TaskService();
 
   @override
   void initState() {
@@ -26,32 +28,33 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Future<void> loadTasks() async {
-    List<Task> allTasks = await DatabaseHelper.getTasks(widget.userId);
+    List<Task> allTasks =
+        await taskService.getTasks(widget.userId);
 
-    // Status filter
     if (filter == "Completed") {
       allTasks = allTasks.where((t) => t.isCompleted == 1).toList();
     } else if (filter == "Pending") {
       allTasks = allTasks.where((t) => t.isCompleted == 0).toList();
     }
 
-    // Priority filter
     if (priorityFilter != "All") {
-      allTasks = allTasks.where((t) => t.priority == priorityFilter).toList();
+      allTasks =
+          allTasks.where((t) => t.priority == priorityFilter).toList();
     }
 
-    tasks = allTasks;
-    setState(() {});
+    setState(() {
+      tasks = allTasks;
+    });
   }
 
   Future<void> deleteTask(int id) async {
-    await DatabaseHelper.deleteTask(id);
+    await taskService.deleteTask(id);
     loadTasks();
   }
 
   Future<void> toggleComplete(Task task) async {
     task.isCompleted = task.isCompleted == 1 ? 0 : 1;
-    await DatabaseHelper.updateTask(task);
+    await taskService.updateTask(task);
     loadTasks();
   }
 
@@ -61,7 +64,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
       appBar: AppBar(
         title: const Text('My Tasks'),
         actions: [
-          // Status Filter
           DropdownButton<String>(
             value: filter,
             underline: const SizedBox(),
@@ -80,7 +82,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
           const SizedBox(width: 10),
 
-          // Priority Filter
           DropdownButton<String>(
             value: priorityFilter,
             underline: const SizedBox(),
@@ -99,6 +100,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
           ),
         ],
       ),
+
       body: tasks.isEmpty
           ? const Center(child: Text('No tasks yet'))
           : ListView.builder(
@@ -136,9 +138,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                               ),
                             );
 
-                            if (result == true) {
-                              loadTasks();
-                            }
+                            if (result == true) loadTasks();
                           },
                         ),
                         IconButton(
@@ -151,6 +151,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 );
               },
             ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.push(
@@ -160,9 +161,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
             ),
           );
 
-          if (result == true) {
-            loadTasks();
-          }
+          if (result == true) loadTasks();
         },
         child: const Icon(Icons.add),
       ),

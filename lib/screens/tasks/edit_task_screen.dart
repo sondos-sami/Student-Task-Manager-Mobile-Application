@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../database/database_helper.dart';
-import '../models/task_model.dart';
+import '../../models/task_model.dart';
+import '../../services/task_service.dart';
 
 class EditTaskScreen extends StatefulWidget {
   final Task task;
@@ -15,6 +15,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   late TextEditingController titleController;
   late TextEditingController descController;
   late TextEditingController dateController;
+
+  final TaskService taskService = TaskService();
 
   String priority = 'Low';
 
@@ -39,7 +41,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       isCompleted: widget.task.isCompleted,
     );
 
-    await DatabaseHelper.updateTask(updatedTask);
+    await taskService.updateTask(updatedTask);
+
+    if (!mounted) return;
 
     Navigator.pop(context, true);
   }

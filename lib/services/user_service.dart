@@ -1,12 +1,12 @@
- import '../db/database_helper.dart';
+ import '../database/database_helper.dart';
 import '../models/user_model.dart';
 
 class UserService {
-  final dbHelper = DatabaseHelper();
+  // final dbHelper = DatabaseHelper;
 
   // 🔹 INSERT USER
   Future<String> registerUser(User user) async {
-    final db = await dbHelper.db;
+    final db = await DatabaseHelper.database;
 
     try {
       await db.insert('users', user.toMap());
@@ -18,7 +18,7 @@ class UserService {
 
   // 🔹 LOGIN
   Future<User?> login(String email, String password) async {
-    final db = await dbHelper.db;
+    final db = await DatabaseHelper.database;
 
     List<Map> result = await db.query(
       'users',

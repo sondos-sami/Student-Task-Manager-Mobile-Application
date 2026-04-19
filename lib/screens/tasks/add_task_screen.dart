@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../database/database_helper.dart';
-import '../models/task_model.dart';
+import '../../models/task_model.dart';
+import '../../services/task_service.dart';
 
 class AddTaskScreen extends StatefulWidget {
   final int userId;
@@ -15,6 +15,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final titleController = TextEditingController();
   final descController = TextEditingController();
   final dateController = TextEditingController();
+
+  final TaskService taskService = TaskService();
 
   String priority = 'Low';
 
@@ -34,9 +36,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       priority: priority,
     );
 
-    await DatabaseHelper.insertTask(task);
+    await taskService.addTask(task);
 
-    Navigator.pop(context, true); // يرجع للـ list ويعمل refresh
+    if (!mounted) return;
+
+    Navigator.pop(context, true);
   }
 
   Future<void> pickDate() async {
