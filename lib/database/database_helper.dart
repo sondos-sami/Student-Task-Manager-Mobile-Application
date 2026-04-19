@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, //1
       onCreate: (db, version) async {
 
         // USERS TABLE
@@ -32,7 +32,7 @@ class DatabaseHelper {
             gender TEXT,
             level TEXT,
             password TEXT,
-            imagePath TEXT
+            profileImagePath TEXT
           )
         ''');
 
@@ -49,7 +49,20 @@ class DatabaseHelper {
           )
         ''');
       },
+        onUpgrade: _onUpgrade,
     );
+  }
+    // ================= UPGRADE DB =================
+  static Future<void> _onUpgrade(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN profileImagePath TEXT'
+      );
+    }
   }
 
   // ================= TASKS CRUD =================

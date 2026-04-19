@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/user_service.dart';
 import '../tasks/task_list_screen.dart';
+import '../../services/auth_service.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -53,6 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     var user = await userService.login(email, password);
 
                     if (user != null) {
+                      final authService = AuthService(); // new
+                       await authService.saveSession(user.id!);
+
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(

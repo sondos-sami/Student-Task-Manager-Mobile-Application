@@ -3,6 +3,7 @@ import '../../models/task_model.dart';
 import '../../services/task_service.dart';
 import 'add_task_screen.dart';
 import 'edit_task_screen.dart';
+import '../profile/profile_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   final int userId;
@@ -98,6 +99,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
               });
             },
           ),
+           IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(userId: widget.userId),
+                ),
+              );
+            },
+          ),
+
         ],
       ),
 

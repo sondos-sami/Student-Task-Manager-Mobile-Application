@@ -150,7 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       gender: gender,
                       level: level,
                       password: password,
-                      imagePath: "",
+                      profileImagePath: "",
                     );
 
                     String result =

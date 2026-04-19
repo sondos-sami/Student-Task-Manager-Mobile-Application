@@ -6,7 +6,8 @@ class User {
   String gender;
   String level;
   String password;
-  String imagePath;
+  String profileImagePath;
+
 
   User({
     this.id,
@@ -16,7 +17,7 @@ class User {
     required this.gender,
     required this.level,
     required this.password,
-    required this.imagePath,
+    required this.profileImagePath,
   });
 
   Map<String, dynamic> toMap() {
@@ -27,7 +28,7 @@ class User {
       'gender': gender,
       'level': level,
       'password': password,
-      'imagePath': imagePath,
+      'profileImagePath': profileImagePath,
     };
   }
 }
