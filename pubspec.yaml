@@ -1,6 +1,6 @@
 name: student_app
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -11,9 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
   sqflite: ^2.3.0
+  sqflite_common_ffi: ^2.3.0
   path: ^1.8.3
   image_picker: ^1.0.7
-  shared_preferences: ^2.2.2   # ✅ اتضافت هنا
+  shared_preferences: ^2.2.2 # ✅ اتضافت هنا
 
   cupertino_icons: ^1.0.8
 

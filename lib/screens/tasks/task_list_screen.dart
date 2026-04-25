@@ -3,6 +3,7 @@ import '../../models/task_model.dart';
 import '../../services/task_service.dart';
 import 'add_task_screen.dart';
 import 'edit_task_screen.dart';
+import 'deadline_reminder_screen.dart';
 import '../profile/profile_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
@@ -29,8 +30,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 
   Future<void> loadTasks() async {
-    List<Task> allTasks =
-        await taskService.getTasks(widget.userId);
+    List<Task> allTasks = await taskService.getTasks(widget.userId);
 
     if (filter == "Completed") {
       allTasks = allTasks.where((t) => t.isCompleted == 1).toList();
@@ -39,8 +39,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
     }
 
     if (priorityFilter != "All") {
-      allTasks =
-          allTasks.where((t) => t.priority == priorityFilter).toList();
+      allTasks = allTasks.where((t) => t.priority == priorityFilter).toList();
     }
 
     setState(() {
@@ -65,6 +64,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
       appBar: AppBar(
         title: const Text('My Tasks'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            tooltip: 'Deadline Reminders',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DeadlineReminderScreen(userId: widget.userId),
+                ),
+              );
+            },
+          ),
           DropdownButton<String>(
             value: filter,
             underline: const SizedBox(),
@@ -99,7 +110,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
               });
             },
           ),
-           IconButton(
+          IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
               Navigator.push(
@@ -110,7 +121,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
               );
             },
           ),
-
         ],
       ),
 
