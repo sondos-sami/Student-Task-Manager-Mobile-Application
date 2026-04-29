@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/task_model.dart';
-import '../../services/task_service.dart';
+import '../../providers/task_provider.dart';
 
 class EditTaskScreen extends StatefulWidget {
   final Task task;
-
   const EditTaskScreen({super.key, required this.task});
 
   @override
@@ -12,47 +12,30 @@ class EditTaskScreen extends StatefulWidget {
 }
 
 class _EditTaskScreenState extends State<EditTaskScreen> {
+  final _formKey = GlobalKey<FormState>();
+
   late TextEditingController titleController;
   late TextEditingController descController;
   late TextEditingController dateController;
 
-  final TaskService taskService = TaskService();
-
-  String priority = 'Low';
+  late String priority;
 
   @override
   void initState() {
     super.initState();
-
     titleController = TextEditingController(text: widget.task.title);
     descController = TextEditingController(text: widget.task.description);
     dateController = TextEditingController(text: widget.task.dueDate);
     priority = widget.task.priority;
   }
 
-  Future<void> updateTask() async {
-    Task updatedTask = Task(
-      id: widget.task.id,
-      userId: widget.task.userId,
-      title: titleController.text,
-      description: descController.text,
-      dueDate: dateController.text,
-      priority: priority,
-      isCompleted: widget.task.isCompleted,
-    );
-
-    await taskService.updateTask(updatedTask);
-
-    if (!mounted) return;
-
-    Navigator.pop(context, true);
-  }
-
   Future<void> pickDate() async {
+     final today = DateTime.now();
+      final nextYear = DateTime.now().add(const Duration(days: 365));
     DateTime? picked = await showDatePicker(
       context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      firstDate: DateTime(today.year, today.month, today.day),
+      lastDate: nextYear,
       initialDate: DateTime.now(),
     );
 
@@ -67,46 +50,48 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       appBar: AppBar(title: const Text("Edit Task")),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: "Title"),
-            ),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(labelText: "Description"),
-            ),
-            TextField(
-              controller: dateController,
-              readOnly: true,
-              onTap: pickDate,
-              decoration: const InputDecoration(labelText: "Due Date"),
-            ),
-            const SizedBox(height: 10),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: titleController,
+                validator: (v) => v!.isEmpty ? "Required" : null,
+              ),
+              TextFormField(controller: descController),
+              TextFormField(
+                controller: dateController,
+                readOnly: true,
+                onTap: pickDate,
+                validator: (v) => v!.isEmpty ? "Required" : null,
+              ),
+              DropdownButtonFormField<String>(
+                value: priority,
+                items: ['Low', 'Medium', 'High']
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+                onChanged: (v) => priority = v!,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    final provider =
+                        Provider.of<TaskProvider>(context, listen: false);
 
-            DropdownButton<String>(
-              value: priority,
-              items: ['Low', 'Medium', 'High']
-                  .map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Text(e),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  priority = value!;
-                });
-              },
-            ),
+                    widget.task.title = titleController.text;
+                    widget.task.description = descController.text;
+                    widget.task.dueDate = dateController.text;
+                    widget.task.priority = priority;
 
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: updateTask,
-              child: const Text("Update Task"),
-            )
-          ],
+                    await provider.updateTask(widget.task);
+                    Navigator.pop(context, true);
+                  }
+                },
+                child: const Text("Update Task"),
+              )
+            ],
+          ),
         ),
       ),
     );

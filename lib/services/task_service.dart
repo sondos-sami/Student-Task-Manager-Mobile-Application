@@ -2,7 +2,6 @@ import '../database/database_helper.dart';
 import '../models/task_model.dart';
 
 class TaskService {
-
   Future<List<Task>> getTasks(int userId) async {
     final db = await DatabaseHelper.database;
 
@@ -36,6 +35,19 @@ class TaskService {
       'tasks',
       where: 'id = ?',
       whereArgs: [id],
+    );
+  }
+
+  // ================= FAVORITE TOGGLE =================
+  Future<void> toggleFavorite(Task task) async {
+    final db = await DatabaseHelper.database;
+
+    final newValue = task.isFavorite == 1 ? 0 : 1;
+
+    await db.update('tasks',
+      {'is_favorite': newValue},
+      where: 'id = ?',
+      whereArgs: [task.id],
     );
   }
 }

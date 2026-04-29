@@ -3,7 +3,6 @@ import '../../services/user_service.dart';
 import '../tasks/task_list_screen.dart';
 import '../../services/auth_service.dart';
 
-
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -55,12 +54,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     if (user != null) {
                       final authService = AuthService(); // new
-                       await authService.saveSession(user.id!);
+                      await authService.saveSession(user.id!);
 
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TaskListScreen(userId: user.id!),
+                          builder: (context) =>
+                              TaskListScreen(userId: user.id!),
                         ),
                       );
                     } else {

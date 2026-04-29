@@ -58,10 +58,10 @@ Future<User?> getUserById(int id) async {
     fullName: maps.first['fullName'] as String,
     email: maps.first['email'] as String,
     studentId: maps.first['studentId'] as String,
-    gender: maps.first['gender'] as String? ?? '',
-    level: maps.first['level'] as String? ?? '',
+    gender: maps.first['gender'] as String,
+    level: maps.first['level'] as String,
     password: maps.first['password'] as String,
-    profileImagePath: maps.first['profileImagePath'] as String? ?? '',
+    profileImagePath: maps.first['profileImagePath'] as String,
   );
 }
  

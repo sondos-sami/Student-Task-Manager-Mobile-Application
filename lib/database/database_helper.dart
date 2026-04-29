@@ -19,9 +19,8 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2, //1
+      version: 3, //1
       onCreate: (db, version) async {
-
         // USERS TABLE
         await db.execute('''
           CREATE TABLE users(
@@ -45,22 +44,28 @@ class DatabaseHelper {
             description TEXT,
             due_date TEXT,
             priority TEXT,
-            is_completed INTEGER
+            is_completed INTEGER,
+            is_favorite INTEGER
           )
         ''');
       },
-        onUpgrade: _onUpgrade,
+      onUpgrade: _onUpgrade,
     );
   }
-    // ================= UPGRADE DB =================
+
+  // ================= UPGRADE DB =================
   static Future<void> _onUpgrade(
     Database db,
     int oldVersion,
     int newVersion,
   ) async {
     if (oldVersion < 2) {
+      await db.execute('ALTER TABLE users ADD COLUMN profileImagePath TEXT');
+    }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE users ADD COLUMN level TEXT');
       await db.execute(
-        'ALTER TABLE users ADD COLUMN profileImagePath TEXT'
+        'ALTER TABLE tasks ADD COLUMN is_favorite INTEGER DEFAULT 0',
       );
     }
   }
@@ -98,10 +103,26 @@ class DatabaseHelper {
   static Future<int> deleteTask(int id) async {
     final db = await database;
 
-    return await db.delete(
+    return await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+  }
+
+  static Future<List<Task>> getFavoriteTasks(int userId) async {
+    final db = await database;
+    final result = await db.query(
       'tasks',
+      where: 'user_id = ? AND is_favorite = 1',
+      whereArgs: [userId],
+    );
+    return result.map((e) => Task.fromMap(e)).toList();
+  }
+
+  static Future<int> toggleFavorite(int taskId, int isFavorite) async {
+    final db = await database;
+    return await db.update(
+      'tasks',
+      {'is_favorite': isFavorite},
       where: 'id = ?',
-      whereArgs: [id],
+      whereArgs: [taskId],
     );
   }
 }
