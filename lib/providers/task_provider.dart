@@ -9,6 +9,7 @@ class TaskProvider extends ChangeNotifier {
   List<Task> _favorites = [];
 
   int? _userId;
+  int? get userId => _userId;
 
   // ===== Filters =====
   String _statusFilter = "All";

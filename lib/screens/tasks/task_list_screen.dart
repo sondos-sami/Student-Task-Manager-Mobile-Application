@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/task_provider.dart';
-import '../../models/task_model.dart';
 import '../profile/profile_screen.dart';
 import 'add_task_screen.dart';
 import 'edit_task_screen.dart';
 import 'favorite_tasks_screen.dart';
+import 'deadline_reminder_screen.dart';
+import '../../models/task_model.dart';
 
 class TaskListScreen extends StatefulWidget {
   final int userId;
@@ -39,13 +40,24 @@ class _TaskListScreenState extends State<TaskListScreen> {
             title: const Text("My Tasks"),
             actions: [
               IconButton(
+                icon: const Icon(Icons.calendar_today),
+                tooltip: 'Deadline Reminders',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DeadlineReminderScreen(),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.favorite, color: Colors.red),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          FavoriteTasksScreen(userId: widget.userId),
+                      builder: (_) => const FavoriteTasksScreen(),
                     ),
                   );
                 },
@@ -55,9 +67,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => ProfileScreen(userId: widget.userId),
-                    ),
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
                   );
                 },
               ),
@@ -68,7 +78,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
             children: [
               const SizedBox(height: 10),
 
-              // ================= STATUS FILTER =================
+              // ===== STATUS FILTER =====
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -94,7 +104,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
               const SizedBox(height: 10),
 
-              // ================= PRIORITY FILTER =================
+              // ===== PRIORITY FILTER =====
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -125,14 +135,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
               const SizedBox(height: 10),
 
-              // ================= TASK LIST =================
+              // ===== TASK LIST =====
               Expanded(
                 child: tasks.isEmpty
                     ? const Center(child: Text("No tasks"))
                     : ListView.builder(
                         itemCount: tasks.length,
                         itemBuilder: (context, index) {
-                          final task = tasks[index];
+                          final Task task = tasks[index];
 
                           return Card(
                             child: ListTile(
@@ -145,7 +155,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-
                               subtitle: Text(
                                 "${task.dueDate} | ${task.priority}",
                                 style: TextStyle(
@@ -154,41 +163,31 @@ class _TaskListScreenState extends State<TaskListScreen> {
                                       : null,
                                 ),
                               ),
-
                               leading: Checkbox(
                                 value: task.isCompleted == 1,
-                                onChanged: (_) {
-                                  provider.toggleComplete(task);
-                                },
+                                onChanged: (_) => provider.toggleComplete(task),
                               ),
-
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.edit),
-                                    onPressed: () async {
-                                      final result = await Navigator.push(
+                                    onPressed: () {
+                                      Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (_) =>
                                               EditTaskScreen(task: task),
                                         ),
                                       );
-
-                                      if (result == true) {
-                                        provider.loadTasks();
-                                      }
                                     },
                                   ),
-
                                   IconButton(
                                     icon: const Icon(Icons.delete),
                                     onPressed: () {
                                       provider.deleteTask(task.id!);
                                     },
                                   ),
-
                                   IconButton(
                                     icon: Icon(
                                       task.isFavorite == 1
@@ -226,7 +225,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  // ================= CHIP WIDGET =================
+  // ===== CHIP WIDGET =====
   Widget _chip(String label, bool selected, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),

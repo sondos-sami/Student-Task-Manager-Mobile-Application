@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
+import '../../providers/task_provider.dart';
 import '../../services/user_service.dart';
 import '../../services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final int userId;
-  const ProfileScreen({Key? key, required this.userId}) : super(key: key);
+  const ProfileScreen({Key? key}) : super(key: key);
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -30,14 +31,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _selectedLevel;
   String? _profileImagePath;
 
-  final List<String> _levels = ['1', '2', '3', '4'];
-
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
     _studentIdController = TextEditingController();
-    _loadUser();
+
+    Future.microtask(() => _loadUser());
   }
 
   @override
@@ -48,7 +48,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    final user = await _userService.getUserById(widget.userId);
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+
+    final userId = taskProvider.userId;
+
+    if (userId == null) return;
+
+    final user = await _userService.getUserById(userId);
+
     if (user != null) {
       setState(() {
         _user = user;
@@ -69,6 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       maxWidth: 512,
       maxHeight: 512,
     );
+
     if (image != null) {
       setState(() {
         _profileImagePath = image.path;
@@ -83,43 +91,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Select Photo',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.camera_alt, color: Colors.blue),
-                title: const Text('Camera'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.green),
-                title: const Text('Gallery'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(title: Text("Select Photo")),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text("Camera"),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text("Gallery"),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // _loadUser
   Future<void> _saveProfile() async {
-    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
+    if (_user == null) return;
 
     setState(() => _isSaving = true);
 
@@ -141,21 +141,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       setState(() {
         _user = updatedUser;
-        _selectedGender = updatedUser.gender;
-        _selectedLevel = updatedUser.level;
         _isEditing = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Profile updated successfully ✅'),
+          content: Text("Profile updated successfully"),
           backgroundColor: Colors.green,
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -163,25 +159,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: const Text("Logout"),
+        content: const Text("Are you sure?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               Navigator.pop(ctx);
               _authService.logout();
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/', // ← بدل '/login'
-                (route) => false,
-              );
+              Navigator.pushNamedAndRemoveUntil(context, "/", (r) => false);
             },
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
+            child: const Text("Logout"),
           ),
         ],
       ),
@@ -192,19 +183,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Profile'),
-        centerTitle: true,
+        title: const Text("My Profile"),
         actions: [
           if (!_isEditing)
             IconButton(
               icon: const Icon(Icons.edit),
               onPressed: () => setState(() => _isEditing = true),
-              tooltip: 'Edit Profile',
             ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
             onPressed: _confirmLogout,
-            tooltip: 'Logout',
           ),
         ],
       ),
@@ -216,170 +204,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // Profile Photo
-                    Center(
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 60,
-                            backgroundColor: Colors.grey.shade200,
-                            backgroundImage: _profileImagePath != null
-                                ? FileImage(File(_profileImagePath!))
-                                : null,
-                            child: _profileImagePath == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 60,
-                                    color: Colors.grey,
-                                  )
-                                : null,
-                          ),
-                          if (_isEditing)
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: _showImageSourceDialog,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundImage: _profileImagePath != null
+                          ? FileImage(File(_profileImagePath!))
+                          : null,
+                      child: _profileImagePath == null
+                          ? const Icon(Icons.person, size: 60)
+                          : null,
                     ),
-                    const SizedBox(height: 8),
-                    if (!_isEditing)
-                      Text(
-                        _user?.email ?? '',
-                        style: TextStyle(color: Colors.grey.shade600),
-                      ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    // Full Name
                     TextFormField(
                       controller: _nameController,
                       readOnly: !_isEditing,
-                      decoration: _inputDecoration('Full Name', Icons.person),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Full name is required'
-                          : null,
+                      decoration: const InputDecoration(labelText: "Full Name"),
                     ),
-                    const SizedBox(height: 16),
 
-                    // Student ID
+                    const SizedBox(height: 10),
+
                     TextFormField(
                       controller: _studentIdController,
                       readOnly: true,
-                      decoration: _inputDecoration('Student ID', Icons.badge),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Student ID is required'
-                          : null,
+                      decoration: const InputDecoration(labelText: "Student ID"),
                     ),
-                    const SizedBox(height: 16),
 
-                    // Email (read-only always)
+                    const SizedBox(height: 10),
+
                     TextFormField(
                       initialValue: _user?.email,
                       readOnly: true,
-                      decoration: _inputDecoration(
-                        'University Email',
-                        Icons.email,
-                      ).copyWith(filled: true, fillColor: Colors.grey.shade100),
+                      decoration: const InputDecoration(labelText: "Email"),
                     ),
-                    const SizedBox(height: 16),
 
-                    // Gender
-                    if (_isEditing) ...[
-                      DropdownButtonFormField<String>(
+                    const SizedBox(height: 10),
+
+                    if (_isEditing)
+                      DropdownButton<String>(
                         value: _selectedGender,
-                        decoration: _inputDecoration(
-                          'Gender (optional)',
-                          Icons.wc,
-                        ),
-                        items: ['Male', 'Female']
-                            .map(
-                              (g) => DropdownMenuItem(value: g, child: Text(g)),
-                            )
+                        items: ["Male", "Female"]
+                            .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e),
+                                ))
                             .toList(),
                         onChanged: (v) => setState(() => _selectedGender = v),
                       ),
-                    ] else ...[
-                      TextFormField(
-                        initialValue: _selectedGender ?? 'Not specified',
-                        readOnly: true,
-                        decoration: _inputDecoration('Gender', Icons.wc),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
 
-                    // Academic Level
-                    // Academic Level - read only دايماً
-                    TextFormField(
-                      initialValue: _selectedLevel != null
-                          ? 'Level $_selectedLevel'
-                          : 'Not specified',
-                      readOnly: true,
-                      decoration: _inputDecoration(
-                        'Academic Level',
-                        Icons.school,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 20),
 
-                    // Buttons
                     if (_isEditing)
                       Row(
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _isEditing = false;
-                                  // reset fields
-                                  _nameController.text = _user!.fullName;
-                                  _studentIdController.text = _user!.studentId;
-                                  _selectedGender = _user!.gender;
-                                  _selectedLevel = _user!.level;
-                                  _profileImagePath = _user!.profileImagePath;
-                                });
-                              },
-                              child: const Text('Cancel'),
+                              onPressed: () => setState(() => _isEditing = false),
+                              child: const Text("Cancel"),
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: ElevatedButton(
                               onPressed: _isSaving ? null : _saveProfile,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                              ),
-                              child: _isSaving
-                                  ? const SizedBox(
-                                      height: 18,
-                                      width: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Save',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
+                              child: const Text("Save"),
                             ),
                           ),
                         ],
@@ -388,16 +275,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      filled: !_isEditing,
-      fillColor: !_isEditing ? Colors.grey.shade50 : null,
     );
   }
 }
